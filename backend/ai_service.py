@@ -215,10 +215,12 @@ class AIAdvisoryService:
     def _build_context(self, user_question: str, probing_answers: Dict[str, str]) -> str:
         """Build context string from user question and probing answers"""
         context = f"User's Challenge: {user_question}\n\n"
-        context += "Additional Context:\n"
+        context += "Key Strategic Context (use this to tailor your advice):\n"
         
         for key, answer in probing_answers.items():
             context += f"- {answer}\n"
+        
+        context += "\nIMPORTANT: Tailor your advice specifically to these context points. Reference them directly in your response to show how they influence your recommendations.\n"
         
         return context
     
