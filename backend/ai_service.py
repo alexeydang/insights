@@ -36,9 +36,9 @@ class AIAdvisoryService:
             {
               "questions": ["question1", "question2", "question3"],
               "options": [
-                ["option1a", "option1b", "option1c", "option1d"],
-                ["option2a", "option2b", "option2c", "option2d"],
-                ["option3a", "option3b", "option3c", "option3d"]
+                ["option1a", "option1b", "option1c", "Not sure, just go ahead"],
+                ["option2a", "option2b", "option2c", "Not sure, just go ahead"],
+                ["option3a", "option3b", "option3c", "Not sure, just go ahead"]
               ]
             }
             
