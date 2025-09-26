@@ -1,19 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
-import { ArrowLeft, Send, Brain, Cpu, Zap, BarChart3, Network, Activity, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Send, Brain, Cpu, Zap, BarChart3, Network, Activity, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { mockData } from '../utils/mock';
+import api from '../services/api';
+import { useToast } from '../hooks/use-toast';
 
 const BoardPage = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState('question'); // 'question', 'probing', 'advice'
+  const { toast } = useToast();
+  const [step, setStep] = useState('question'); // 'question', 'probing', 'advice', 'error'
   const [userQuestion, setUserQuestion] = useState('');
+  const [sessionId, setSessionId] = useState(null);
+  const [probingQuestions, setProbingQuestions] = useState([]);
+  const [probingOptions, setProbingOptions] = useState([]);
   const [probingAnswers, setProbingAnswers] = useState({});
   const [currentProbingIndex, setCurrentProbingIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [advice, setAdvice] = useState([]);
+  const [error, setError] = useState(null);
 
   const innovators = [
     {
@@ -51,33 +58,113 @@ const BoardPage = () => {
     }
   ];
 
-  const handleQuestionSubmit = () => {
+  // Test backend connection on mount
+  useEffect(() => {
+    const testBackend = async () => {
+      try {
+        await api.testConnection();
+        console.log('✅ Backend connection successful');
+      } catch (error) {
+        console.error('❌ Backend connection failed:', error);
+        toast({
+          title: "Connection Error",
+          description: "Unable to connect to backend. Please refresh the page.",
+          variant: "destructive"
+        });
+      }
+    };
+    testBackend();
+  }, [toast]);
+
+  const handleQuestionSubmit = async () => {
     if (!userQuestion.trim()) return;
-    setStep('probing');
+    
+    setIsLoading(true);
+    try {
+      console.log('🚀 Creating session with question:', userQuestion);
+      const response = await api.createSession(userQuestion);
+      
+      setSessionId(response.session_id);
+      setProbingQuestions(response.probing_questions);
+      setProbingOptions(response.probing_options);
+      setCurrentProbingIndex(0);
+      setStep('probing');
+      
+      toast({
+        title: "Session Created",
+        description: "AI has generated contextual questions for you."
+      });
+      
+    } catch (error) {
+      console.error('❌ Error creating session:', error);
+      setError(error.message);
+      setStep('error');
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleProbingAnswer = (answer) => {
+  const handleProbingAnswer = async (answer) => {
     const newAnswers = { ...probingAnswers, [currentProbingIndex]: answer };
     setProbingAnswers(newAnswers);
     
-    if (currentProbingIndex < mockData.probingQuestions.length - 1) {
+    if (currentProbingIndex < probingQuestions.length - 1) {
       setCurrentProbingIndex(currentProbingIndex + 1);
     } else {
+      // All probing questions answered, submit and start advice generation
       setIsLoading(true);
-      // Simulate AI processing
-      setTimeout(() => {
-        setIsLoading(false);
+      try {
+        console.log('🚀 Submitting probing answers:', newAnswers);
+        await api.submitProbingAnswers(sessionId, newAnswers);
+        
+        toast({
+          title: "Analysis Started",
+          description: "AI is generating personalized advice from legendary minds."
+        });
+        
+        // Start polling for advice
+        console.log('🔄 Starting advice polling...');
+        const adviceResponse = await api.pollForAdvice(sessionId);
+        
+        setAdvice(adviceResponse.advice);
         setStep('advice');
-      }, 3000);
+        
+        toast({
+          title: "Advice Ready",
+          description: "Your personalized insights have been generated!"
+        });
+        
+      } catch (error) {
+        console.error('❌ Error getting advice:', error);
+        setError(error.message);
+        setStep('error');
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const resetSession = () => {
     setStep('question');
     setUserQuestion('');
+    setSessionId(null);
+    setProbingQuestions([]);
+    setProbingOptions([]);
     setProbingAnswers({});
     setCurrentProbingIndex(0);
     setIsLoading(false);
+    setAdvice([]);
+    setError(null);
   };
 
   return (
@@ -168,6 +255,7 @@ const BoardPage = () => {
                       value={userQuestion}
                       onChange={(e) => setUserQuestion(e.target.value)}
                       className="min-h-40 text-lg bg-slate-800/50 border-2 border-slate-700/50 focus:border-blue-500/50 rounded-xl text-white placeholder:text-slate-400 backdrop-blur-sm"
+                      disabled={isLoading}
                     />
                     <div className="absolute bottom-4 right-4 text-xs text-slate-500">
                       {userQuestion.length}/500
@@ -176,12 +264,21 @@ const BoardPage = () => {
                   
                   <Button 
                     onClick={handleQuestionSubmit}
-                    disabled={!userQuestion.trim()}
+                    disabled={!userQuestion.trim() || isLoading}
                     size="lg"
                     className="w-full bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-600 hover:from-blue-500 hover:via-cyan-500 hover:to-blue-500 text-white py-6 text-lg font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Send className="mr-3 w-5 h-5" />
-                    Initiate Analysis
+                    {isLoading ? (
+                      <>
+                        <Activity className="mr-3 w-5 h-5 animate-spin" />
+                        Initializing...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-3 w-5 h-5" />
+                        Initiate Analysis
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -201,7 +298,7 @@ const BoardPage = () => {
                     </h2>
                     <div className="flex items-center space-x-4">
                       <Badge variant="outline" className="px-4 py-2 border-purple-400/30 text-purple-300">
-                        {currentProbingIndex + 1} of {mockData.probingQuestions.length}
+                        {currentProbingIndex + 1} of {probingQuestions.length}
                       </Badge>
                       <div className="flex items-center space-x-2 text-sm text-blue-300/50">
                         <Activity className="w-3 h-3 animate-pulse" />
@@ -221,12 +318,12 @@ const BoardPage = () => {
                         <Cpu className="w-5 h-5 text-purple-400" />
                       </div>
                       <h3 className="text-xl font-semibold text-white">
-                        {mockData.probingQuestions[currentProbingIndex]}
+                        {probingQuestions[currentProbingIndex]}
                       </h3>
                     </div>
                     
                     <div className="grid gap-4">
-                      {mockData.probingOptions[currentProbingIndex]?.map((option, index) => (
+                      {probingOptions[currentProbingIndex]?.map((option, index) => (
                         <Button
                           key={index}
                           variant="outline"
@@ -282,6 +379,35 @@ const BoardPage = () => {
             </Card>
           )}
 
+          {/* Error State */}
+          {step === 'error' && (
+            <Card className="p-16 border border-red-800/50 shadow-2xl bg-slate-900/50 backdrop-blur-sm text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-orange-500/5"></div>
+              
+              <div className="relative z-10">
+                <div className="relative mb-8">
+                  <div className="w-24 h-24 bg-slate-900 border border-red-400/30 rounded-full flex items-center justify-center mx-auto">
+                    <AlertCircle className="w-12 h-12 text-red-400" />
+                  </div>
+                </div>
+                
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-red-200 bg-clip-text text-transparent mb-4">
+                  Processing Error
+                </h2>
+                <p className="text-red-100/60 text-lg mb-8">{error}</p>
+                
+                <Button 
+                  onClick={resetSession}
+                  size="lg"
+                  className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white px-8 py-4 text-lg font-semibold rounded-xl"
+                >
+                  <Brain className="mr-3 w-5 h-5" />
+                  Start New Session
+                </Button>
+              </div>
+            </Card>
+          )}
+
           {/* Advice Step */}
           {step === 'advice' && (
             <div className="space-y-10">
@@ -296,7 +422,8 @@ const BoardPage = () => {
                 <p className="text-blue-100/60 text-lg">Personalized insights synthesized from legendary innovation patterns</p>
               </div>
               
-              {innovators.map((innovator, index) => {
+              {advice.map((adviceItem, index) => {
+                const innovator = innovators.find(i => i.name === adviceItem.innovator) || innovators[index];
                 const IconComponent = innovator.icon;
                 return (
                   <Card key={index} className={`p-8 border border-slate-800/50 shadow-2xl ${innovator.bgGlow} bg-slate-900/50 backdrop-blur-sm hover:shadow-2xl transition-all duration-500 relative overflow-hidden group`}>
@@ -310,25 +437,25 @@ const BoardPage = () => {
                           </div>
                           <div className="text-center">
                             <div className="text-xs text-slate-400 uppercase tracking-wider">Confidence</div>
-                            <div className={`text-lg font-mono font-bold ${innovator.accentColor}`}>{innovator.confidence}</div>
+                            <div className={`text-lg font-mono font-bold ${innovator.accentColor}`}>{adviceItem.confidence || innovator.confidence}</div>
                           </div>
                         </div>
                         
                         <div className="flex-1">
                           <div className="mb-6">
                             <div className="flex items-center justify-between mb-2">
-                              <h3 className="text-2xl font-bold text-white">{innovator.name}</h3>
+                              <h3 className="text-2xl font-bold text-white">{adviceItem.innovator}</h3>
                               <div className="flex items-center space-x-2 text-xs text-slate-400">
                                 <div className={`w-2 h-2 ${innovator.accentColor.replace('text-', 'bg-')} rounded-full animate-pulse`}></div>
                                 <span>AI Model Active</span>
                               </div>
                             </div>
-                            <p className={`${innovator.accentColor} font-medium text-lg`}>{innovator.title}</p>
+                            <p className={`${innovator.accentColor} font-medium text-lg`}>{adviceItem.title}</p>
                           </div>
                           
                           <div className={`p-6 rounded-xl bg-gradient-to-r ${innovator.color} border-l-4 ${innovator.borderColor} backdrop-blur-sm`}>
                             <p className="text-white leading-relaxed whitespace-pre-line text-lg">
-                              {mockData.advice[index]}
+                              {adviceItem.advice_text}
                             </p>
                           </div>
                         </div>
