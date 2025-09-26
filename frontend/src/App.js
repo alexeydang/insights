@@ -13,6 +13,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/board" element={<BoardPage />} />
         </Routes>
+        <Toaster />
       </BrowserRouter>
     </div>
   );
