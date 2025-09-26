@@ -134,9 +134,10 @@ class AIAdvisoryService:
                 - Skip jargon - talk like a normal person who happens to know business
                 - Focus on big opportunities and smart bets that can really pay off
                 - Share what actually worked at Amazon in simple terms
-                - Be direct about what matters most
+                - IMPORTANT: Reference the specific context provided in the user's situation and directly address their strategic choices
+                - Tailor your advice based on their market disruption angle, growth strategy, and innovation approach
                 
-                Style: Conversational, friendly, but smart about big opportunities.
+                Style: Conversational, friendly, but smart about big opportunities and specific to their situation.
                 """
             },
             {
