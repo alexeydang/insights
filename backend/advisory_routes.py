@@ -69,6 +69,9 @@ async def submit_probing_answers(session_id: str, request: SubmitProbingAnswersR
         if not session_doc:
             raise HTTPException(status_code=404, detail="Session not found")
         
+        # Convert ObjectId to string for Pydantic
+        if '_id' in session_doc:
+            session_doc['_id'] = str(session_doc['_id'])
         session = AdvisorySession(**session_doc)
         
         if session.status != SessionStatus.PENDING:
@@ -111,6 +114,9 @@ async def get_advice(session_id: str):
         if not session_doc:
             raise HTTPException(status_code=404, detail="Session not found")
         
+        # Convert ObjectId to string for Pydantic
+        if '_id' in session_doc:
+            session_doc['_id'] = str(session_doc['_id'])
         session = AdvisorySession(**session_doc)
         
         if session.status == SessionStatus.PENDING:
