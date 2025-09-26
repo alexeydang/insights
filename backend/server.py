@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 from typing import List
 import uuid
 from datetime import datetime
+from ai_service import AIAdvisoryService
+from advisory_routes import router as advisory_router, set_dependencies
 
 
 ROOT_DIR = Path(__file__).parent
@@ -38,7 +40,7 @@ class StatusCheckCreate(BaseModel):
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Innovation Board API - Neural Advisory System Online"}
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
@@ -52,13 +54,14 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-# Include the router in the main app
+# Include the routers in the main app
 app.include_router(api_router)
+app.include_router(advisory_router)
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -69,6 +72,17 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize AI service and set dependencies"""
+    try:
+        ai_service = AIAdvisoryService()
+        set_dependencies(db, ai_service)
+        logger.info("Innovation Board API started successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize AI service: {e}")
+        raise e
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
