@@ -48,7 +48,7 @@ class AIAdvisoryService:
             3. Innovation approach (reinvention vs optimization, cost disruption vs premium)
             
             Avoid asking about constraints or limitations. Focus on opportunities and growth vectors.
-            Make questions specific to their challenge and provide 4 realistic options each.
+            Make questions specific to their challenge and provide 3 realistic options each, with the 4th always being "Not sure, just go ahead".
             """
             
             chat = self._create_chat(session_id + "_probing", system_message)
