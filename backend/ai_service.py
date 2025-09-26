@@ -61,10 +61,22 @@ class AIAdvisoryService:
             # Parse JSON response
             import json
             try:
-                data = json.loads(response)
-                return data["questions"], data["options"]
+                # Clean the response in case there's extra text
+                response_text = response.strip()
+                
+                # Try to find JSON in the response
+                if '{' in response_text:
+                    start_idx = response_text.find('{')
+                    end_idx = response_text.rfind('}') + 1
+                    json_text = response_text[start_idx:end_idx]
+                    data = json.loads(json_text)
+                    return data["questions"], data["options"]
+                else:
+                    raise json.JSONDecodeError("No JSON found in response", response_text, 0)
+                    
             except (json.JSONDecodeError, KeyError) as e:
                 logger.error(f"Failed to parse probing questions response: {e}")
+                logger.error(f"Raw response: {response}")
                 # Fallback to default questions
                 return self._get_default_probing_questions()
                 
