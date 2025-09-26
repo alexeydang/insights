@@ -223,7 +223,7 @@ class AIAdvisoryService:
         for key, answer in probing_answers.items():
             context += f"- {answer}\n"
         
-        context += "\nIMPORTANT: Tailor your advice specifically to these context points. Reference them directly in your response to show how they influence your recommendations.\n"
+        context += "\nCRITICAL: Analyze the specific industry context first. What are the unique dynamics, competitors, inefficiencies, and hidden opportunities in this exact industry? Then give bold, industry-specific strategies that exploit these insights. Avoid generic business advice.\n"
         
         return context
     
