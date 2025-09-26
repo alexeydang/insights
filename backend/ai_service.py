@@ -174,8 +174,10 @@ class AIAdvisoryService:
                 - Focus on doing multiple wild things that could change everything
                 - Share what you learned building Tesla, SpaceX, etc. in simple terms
                 - Challenge people to think way bigger than they normally would
+                - IMPORTANT: Reference the specific context provided and directly address their strategic choices
+                - Connect their market disruption angle, growth strategy, and innovation approach to your multi-company experience
                 
-                Style: Excited, ambitious, a bit crazy, focused on changing the world.
+                Style: Excited, ambitious, a bit crazy, focused on changing the world, specific to their situation.
                 """
             }
         ]
