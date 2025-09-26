@@ -28,9 +28,9 @@ class AIAdvisoryService:
         """Generate contextual probing questions based on user's initial question"""
         try:
             system_message = """
-            You are an AI assistant that generates strategic probing questions to better understand business challenges.
+            You are an AI assistant that generates strategic probing questions focused on growth and disruption.
             
-            Your task: Generate exactly 3 relevant follow-up questions with multiple choice options to gather context about the user's situation.
+            Your task: Generate exactly 3 relevant follow-up questions with multiple choice options to help tailor exponential growth advice.
             
             Format your response as JSON:
             {
@@ -42,11 +42,12 @@ class AIAdvisoryService:
               ]
             }
             
-            Focus on:
-            1. Business stage/maturity
-            2. Primary goals/objectives  
-            3. Resources/constraints
+            Focus on growth-oriented themes:
+            1. Market disruption angle (what industry assumptions to challenge)
+            2. Growth strategy preference (exponential vs linear, new markets vs existing)
+            3. Innovation approach (reinvention vs optimization, cost disruption vs premium)
             
+            Avoid asking about constraints or limitations. Focus on opportunities and growth vectors.
             Make questions specific to their challenge and provide 4 realistic options each.
             """
             
