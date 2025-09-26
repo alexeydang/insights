@@ -170,7 +170,7 @@ const BoardPage = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
       {/* Animated background */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
       
       {/* Header */}
       <header className="px-6 py-6 border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-20">
